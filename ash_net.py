@@ -187,3 +187,39 @@ if __name__ == "__main__":
     print(f"[✔] نجح التمرير الأمامي بنجاح استقراري مطلق.")
     print(f"[✔] أبعاد مصفوفة المخرجات النهائية (Logits): {output.shape}")
     print("=" * 90)
+    # ====================== كود التصدير (أضفه في النهاية) ======================
+
+if __name__ == "__main__":
+    print("="*60)
+    print("جاري تصدير ASH-Net ...")
+    print("="*60)
+
+    model = ASHNet(
+        feature_dim=64, 
+        num_classes=10, 
+        coupling_g=25.0,
+        lstm_layers=2,
+        use_attention=True
+    )
+    
+    model.eval()
+
+    # بيانات وهمية للتصدير
+    dummy_input = torch.randn(1, 60, 64)
+
+    # 1. TorchScript
+    traced = torch.jit.trace(model, dummy_input)
+    traced.save("ASH_Net_torchscript.pt")
+    print("✅ تم حفظ TorchScript → ASH_Net_torchscript.pt")
+
+    # 2. ONNX
+    torch.onnx.export(
+        model, dummy_input, "ASH_Net.onnx",
+        export_params=True,
+        opset_version=17,
+        input_names=['input'],
+        output_names=['output'],
+        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+    )
+    print("✅ تم حفظ ONNX → ASH_Net.onnx")
+    print("🎉 التصدير انتهى بنجاح!")
